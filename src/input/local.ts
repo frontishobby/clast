@@ -73,10 +73,9 @@ export class LocalInput {
           : { x: keyAxis.x, y: keyAxis.y };
     const move = this.vp.worldDirFromScreenDir(screenMove.x, screenMove.y);
 
-    const thumbAim = this.touch.aimDir();
     const padAim = this.pad.aim.mag > 0 ? this.pad.aim : null;
-    if (thumbAim || padAim) {
-      const a = (thumbAim ?? padAim)!;
+    if (padAim) {
+      const a = padAim;
       const w = this.vp.worldDirFromScreenDir(a.x, a.y);
       this.lastAim = Math.atan2(w.y, w.x);
     } else if (this.pointerActive && !this.touch.engaged) {

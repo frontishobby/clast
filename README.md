@@ -24,7 +24,7 @@ here.*
 |                  | Move       | Aim         | Attack                            |
 | ---------------- | ---------- | ----------- | --------------------------------- |
 | Keyboard & mouse | `WASD`     | mouse       | click or `space`                  |
-| Touch            | left thumb | right thumb | right thumb — tap, or hold to keep swinging |
+| Touch            | left thumb | where you walk | right thumb — tap, or hold to keep swinging |
 | Gamepad          | left stick | right stick | `A` / right trigger, or shove the right stick |
 
 Menus take arrow keys, the D-pad or either stick, with `enter`/`A` to choose
@@ -75,9 +75,11 @@ every window size; anything outside the 16:9 or 9:16 frame is a black bar.
 
 ## Mobile
 
-Touch devices are pinned to portrait, so the on-screen sticks always sit where
-thumbs are. Both sticks float — wherever your thumb lands becomes the centre,
-so you never have to look down to find them.
+Touch devices are pinned to portrait, so the controls always sit where thumbs
+are. The left half is a floating stick — wherever your thumb lands becomes the
+centre, so you never have to look down to find it. The right half is one big
+attack button: you swing toward wherever you last walked, so only one thumb
+ever has to steer.
 
 <img src="docs/media/touch.png" alt="Touch controls" width="320">
 
