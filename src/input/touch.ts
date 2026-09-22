@@ -1,15 +1,11 @@
 import type { Viewport } from '../view/viewport.ts';
 
 /**
- * Left half is a floating move stick; right half is one big attack button.
+ * Two floating virtual sticks: left half moves, right half aims and swings.
  *
  * Floating rather than fixed, because a fixed stick means looking down to find
  * it. Wherever a thumb lands becomes the centre, so you can play without
  * taking your eyes off the arena.
- *
- * There is deliberately no aim stick. Steering two sticks at once is the hard
- * part of twin-stick on glass, so you swing where you last walked and the
- * right thumb only has to tap.
  *
  * Everything here is in letterbox screen space and produces screen-relative
  * directions, exactly like WASD. The viewport turns those into world space, so
@@ -18,6 +14,7 @@ import type { Viewport } from '../view/viewport.ts';
 
 export const STICK_RADIUS = 92;
 const MOVE_DEADZONE = 0.16;
+const AIM_DEADZONE = 0.22;
 
 export interface StickReading {
   /** Unit-ish direction in screen space; zero inside the deadzone. */
@@ -65,16 +62,9 @@ export interface Stick {
   moved: boolean;
 }
 
-/** A finger held on the attack side. Position is only kept for drawing. */
-export interface Press {
-  pointerId: number;
-  x: number;
-  y: number;
-}
-
 export class TouchSticks {
   move: Stick | null = null;
-  attack: Press | null = null;
+  aim: Stick | null = null;
   /** Flips on the first touch, so the sticks never show on a mouse-only run. */
   engaged = false;
 
@@ -88,14 +78,9 @@ export class TouchSticks {
       this.engaged = true;
       const p = this.vp.screenFromClient(e.clientX, e.clientY);
       const rightHalf = p.x > this.vp.layout.logicalW / 2;
-      if (rightHalf) {
-        if (this.attack) return; // one thumb per side
-        this.attack = { pointerId: e.pointerId, x: p.x, y: p.y };
-        canvas.setPointerCapture(e.pointerId);
-        return;
-      }
-      if (this.move) return;
-      this.move = {
+      const slot: 'move' | 'aim' = rightHalf ? 'aim' : 'move';
+      if (this[slot]) return; // one thumb per side
+      this[slot] = {
         pointerId: e.pointerId,
         ox: p.x,
         oy: p.y,
@@ -110,15 +95,11 @@ export class TouchSticks {
 
     const move = (e: PointerEvent) => {
       if (e.pointerType !== 'touch') return;
+      const stick = this.find(e.pointerId);
+      if (!stick) return;
       const p = this.vp.screenFromClient(e.clientX, e.clientY);
-      if (this.attack?.pointerId === e.pointerId) {
-        this.attack.x = p.x;
-        this.attack.y = p.y;
-        return;
-      }
-      const stick = this.move;
-      if (stick?.pointerId !== e.pointerId) return;
-      stick.reading = stickVector(stick.ox, stick.oy, p.x, p.y, MOVE_DEADZONE);
+      const deadzone = stick === this.move ? MOVE_DEADZONE : AIM_DEADZONE;
+      stick.reading = stickVector(stick.ox, stick.oy, p.x, p.y, deadzone);
       if (stick.reading.mag > 0) stick.moved = true;
 
       // Let the origin trail a thumb that has run past the ring, so a long
@@ -137,7 +118,7 @@ export class TouchSticks {
     const up = (e: PointerEvent) => {
       if (e.pointerType !== 'touch') return;
       if (this.move?.pointerId === e.pointerId) this.move = null;
-      if (this.attack?.pointerId === e.pointerId) this.attack = null;
+      if (this.aim?.pointerId === e.pointerId) this.aim = null;
       if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     };
 
@@ -147,21 +128,33 @@ export class TouchSticks {
     canvas.addEventListener('pointercancel', up);
   }
 
+  private find(id: number): Stick | null {
+    if (this.move?.pointerId === id) return this.move;
+    if (this.aim?.pointerId === id) return this.aim;
+    return null;
+  }
+
   /** Screen-space movement direction. */
   moveDir(): StickReading {
     return this.move?.reading ?? { x: 0, y: 0, mag: 0 };
   }
 
+  /** Screen-space aim direction, or null when the aim thumb is not pushed. */
+  aimDir(): StickReading | null {
+    const r = this.aim?.reading;
+    return r && r.mag > 0 ? r : null;
+  }
+
   /**
-   * Touching the right side at all swings, toward wherever you are facing.
-   * Holding keeps swinging on the weapon's cooldown.
+   * Touching the right side at all swings. A bare tap attacks straight ahead;
+   * dragging aims first. Holding keeps swinging on the weapon's cooldown.
    */
   get attacking(): boolean {
-    return this.attack !== null;
+    return this.aim !== null;
   }
 
   reset(): void {
     this.move = null;
-    this.attack = null;
+    this.aim = null;
   }
 }
