@@ -111,6 +111,21 @@ interpolates the opponent one snapshot behind. The arena travels as deltas with
 a full keyframe every two seconds, so a lost message cannot leave a phantom
 wall standing on one screen.
 
+## Limits
+
+Because there is no server in the middle, multiplayer only works when the two
+browsers can reach each other directly. STUN is used to punch through NAT, but
+there is no TURN relay to fall back on, so:
+
+- **Symmetric NAT won't connect.** Some carrier networks (a lot of mobile
+  data/LTE), corporate networks and some public Wi-Fi hand out a different
+  external port for every destination, and hole punching fails. If either
+  player is behind one, matchmaking may find the other player but the
+  connection never opens. Switching to a home Wi-Fi network usually fixes it.
+- Firewalls that block UDP outright will stop it too, for the same reason.
+
+Single player is unaffected and works offline.
+
 ## Single player
 
 The CPU is an A\* pathfinder that prices destructible blocks rather than
