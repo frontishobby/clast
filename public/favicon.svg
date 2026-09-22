@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#05060a"/>
+  <!-- A block split into two clasts, in the seat colours. -->
+  <g fill="none" stroke-width="5" stroke-linejoin="round">
+    <path d="M30 8 L10 30 L22 56 Z" stroke="#3df2ff"/>
+    <path d="M38 10 L56 26 L44 54 Z" stroke="#ff3ddc"/>
+  </g>
+</svg>
