@@ -1,4 +1,5 @@
 import { joinRoom, selfId, type Room } from 'trystero/nostr';
+import { ICE_SERVERS, describeRoute } from './ice.ts';
 import { Pairing, type PairTag } from './pairing.ts';
 import type { Link, NetMessage } from './protocol.ts';
 
@@ -45,6 +46,8 @@ export interface Match {
   /** Lower peer id hosts, so both sides independently agree without asking. */
   isHost: boolean;
   peerId: string;
+  /** The path the connection took, e.g. "p2p ipv6", once the browser can say. */
+  route(): Promise<string | null>;
   leave(): void;
 }
 
@@ -118,7 +121,7 @@ export function findMatch(intent: MatchIntent, opts: MatchOptions = {}): Promise
       // Since 0.25 this lives under relayConfig. The old top-level relayUrls
       // is silently ignored, which quietly put everyone on a handful of
       // random default relays, most of them dead.
-      { appId: APP_ID, relayConfig: { urls: RELAY_URLS } },
+      { appId: APP_ID, relayConfig: { urls: RELAY_URLS }, rtcConfig: { iceServers: ICE_SERVERS } },
       roomIdFor(intent),
     );
 
@@ -162,7 +165,11 @@ export function findMatch(intent: MatchIntent, opts: MatchOptions = {}): Promise
           () => room.leave(),
         );
         status('connected');
-        resolve({ link, isHost: pairing.isHost, peerId, leave });
+        const route = async () => {
+          const pc = room.getPeers()[peerId];
+          return pc ? describeRoute(pc).catch(() => null) : null;
+        };
+        resolve({ link, isHost: pairing.isHost, peerId, route, leave });
       },
     );
 
