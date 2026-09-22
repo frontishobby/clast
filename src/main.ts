@@ -14,7 +14,7 @@ import { drawMenu, hitboxes, itemsFor, typeCode, type Screen } from './ui/menu.t
 import { Fx } from './view/fx.ts';
 import { PALETTE, font, loadFonts } from './view/neon.ts';
 import { drawWorld } from './view/renderer.ts';
-import { Viewport, type Seat } from './view/viewport.ts';
+import { Viewport, WORLD_H, WORLD_W, type Seat } from './view/viewport.ts';
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const vp = new Viewport(canvas);
@@ -36,6 +36,29 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
+
+/**
+ * An installed desktop app opens with a 1280x720 playfield, one world unit per
+ * pixel. The manifest has no way to ask for a window size, so it is set here:
+ * resizeTo takes the outer size, so the title bar is measured and added on.
+ * Browser tabs cannot be resized and phones ignore it, hence the checks.
+ */
+function sizeInstalledWindow(): void {
+  const installed = matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+  if (!installed || matchMedia('(pointer: coarse)').matches) return;
+  // `screen` is the menu state in this file, hence window.screen.
+  const display: globalThis.Screen & { availLeft?: number; availTop?: number } = window.screen;
+  const chromeW = window.outerWidth - window.innerWidth;
+  const chromeH = window.outerHeight - window.innerHeight;
+  const w = Math.min(WORLD_W + chromeW, display.availWidth);
+  const h = Math.min(WORLD_H + chromeH, display.availHeight);
+  window.resizeTo(w, h);
+  window.moveTo(
+    Math.round((display.availLeft ?? 0) + (display.availWidth - w) / 2),
+    Math.round((display.availTop ?? 0) + (display.availHeight - h) / 2),
+  );
+}
+sizeInstalledWindow();
 
 const keys = new Keyboard();
 const input = new LocalInput(vp, keys, canvas);
