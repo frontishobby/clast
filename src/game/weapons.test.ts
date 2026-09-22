@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CELL } from './arena.ts';
-import { IDLE_INPUT, Sim, TUNING, type PlayerInput } from './sim.ts';
+import { IDLE_INPUT, Sim, TUNING, dropChanceAt, type PlayerInput } from './sim.ts';
 import { DROPPABLE, WEAPONS, rollWeapon, type WeaponId } from './weapons.ts';
 
 const DT = 1 / 60;
@@ -78,6 +78,14 @@ test('drops land near the advertised rate', () => {
     Math.abs(rate - TUNING.dropChance) < 0.06,
     `dropped ${(rate * 100).toFixed(1)}% over ${breaks} breaks, want ${TUNING.dropChance * 100}%`,
   );
+});
+
+test('drops get a little more generous as you lose health', () => {
+  assert.equal(dropChanceAt(TUNING.playerMaxHp), TUNING.dropChance, 'full health is the base rate');
+  for (let hp = TUNING.playerMaxHp; hp > 1; hp--) {
+    assert.ok(dropChanceAt(hp - 1) > dropChanceAt(hp), `${hp - 1} hp beats ${hp} hp`);
+  }
+  assert.ok(dropChanceAt(1) <= 0.45, 'still a nudge, not a guarantee');
 });
 
 test('walking over a drop equips it with full charges', () => {

@@ -32,7 +32,8 @@ and `esc`/`B` to go back. `F3` toggles a debug overlay.
 
 Blocks have 3 health and your fists do 1 damage, so bare-handed you are
 chipping away. Breaking a block has a 28% chance of dropping one of five
-weapons: a fast **dagger**, a long-reach **spear**, a **hammer** that clears a
+weapons — a little more when you are hurt, up to 40% on your last point of
+health: a fast **dagger**, a long-reach **spear**, a **hammer** that clears a
 block per swing, a thrown **shard**, and a **bomb** whose blast rewrites the
 cover around it. Weapons have limited charges and you fall back to fists when
 they run out.
@@ -123,7 +124,7 @@ planning rate and nerve.
 ```sh
 npm install
 npm run dev      # vite, also served on your LAN for phone testing
-npm test         # 83 tests, no browser needed
+npm test         # 84 tests, no browser needed
 npm run build    # static output in dist/
 npm run check    # typecheck only
 ```
@@ -157,7 +158,7 @@ Two boundaries do most of the architectural work:
 
 ## Tests
 
-83 tests, none of which need a browser. They exist for the parts that fail
+84 tests, none of which need a browser. They exist for the parts that fail
 *quietly* — where the bug does not throw, it just makes the game subtly wrong
 for one player:
 

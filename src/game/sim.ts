@@ -22,8 +22,10 @@ export const TUNING = {
   invulnerable: 0.25,
   knockbackDecay: 9,
 
-  /** Odds a broken block coughs up a weapon. */
+  /** Odds a broken block coughs up a weapon, at full health. */
   dropChance: 0.28,
+  /** Added per point of health the breaker is missing: a gentle comeback. */
+  dropChancePerMissingHp: 0.03,
   pickupRadius: 13,
 
   zoneMin: 0.3,
@@ -39,6 +41,12 @@ export interface PlayerInput {
   /** Aim angle in world space, radians. */
   aim: number;
   attack: boolean;
+}
+
+/** Drop odds for a block broken by someone on `hp` health. */
+export function dropChanceAt(hp: number): number {
+  const missing = Math.max(0, TUNING.playerMaxHp - hp);
+  return TUNING.dropChance + missing * TUNING.dropChancePerMissingHp;
 }
 
 export const IDLE_INPUT: PlayerInput = { moveX: 0, moveY: 0, aim: 0, attack: false };
@@ -425,7 +433,7 @@ export class Sim {
         const cx = clamp(p.x, gx * CELL, gx * CELL + CELL);
         const cy = clamp(p.y, gy * CELL, gy * CELL + CELL);
         if (!this.inArc(p, cx, cy, 0, id)) continue;
-        this.damageBlock(gx, gy, def.blockDamage, p.swingAim);
+        this.damageBlock(gx, gy, def.blockDamage, p.swingAim, p.seat);
       }
     }
 
@@ -492,7 +500,7 @@ export class Sim {
         const gy = Math.floor(pr.y / CELL);
         if (this.arena.hpAt(gx, gy) > 0) {
           if (shape.blast <= 0) {
-            this.damageBlock(gx, gy, def.blockDamage, Math.atan2(pr.vy, pr.vx));
+            this.damageBlock(gx, gy, def.blockDamage, Math.atan2(pr.vy, pr.vx), pr.owner);
           }
           hit = true;
         }
@@ -525,7 +533,7 @@ export class Sim {
         const cx = clamp(x, gx * CELL, gx * CELL + CELL);
         const cy = clamp(y, gy * CELL, gy * CELL + CELL);
         if (Math.hypot(cx - x, cy - y) > radius) continue;
-        this.damageBlock(gx, gy, def.blockDamage, Math.atan2(cy - y, cx - x));
+        this.damageBlock(gx, gy, def.blockDamage, Math.atan2(cy - y, cx - x), owner);
       }
     }
 
@@ -551,7 +559,13 @@ export class Sim {
 
   // --- shared damage --------------------------------------------------------
 
-  private damageBlock(gx: number, gy: number, amount: number, aim: number): void {
+  private damageBlock(
+    gx: number,
+    gy: number,
+    amount: number,
+    aim: number,
+    by: 0 | 1,
+  ): void {
     const i = this.arena.idx(gx, gy);
     const hp = Math.max(0, this.arena.hp[i]! - amount);
     this.arena.hp[i] = hp;
@@ -560,15 +574,15 @@ export class Sim {
       return;
     }
     this.events.push({ type: 'blockBreak', gx, gy, aim });
-    this.rollDrop(gx, gy);
+    this.rollDrop(gx, gy, this.players[by].hp);
   }
 
-  private rollDrop(gx: number, gy: number): void {
+  private rollDrop(gx: number, gy: number, breakerHp: number): void {
     // Two draws every break, whether or not it pays out, so the stream stays
     // aligned between peers regardless of the outcome.
     const roll = this.rng.next();
     const which = this.rng.next();
-    if (roll >= TUNING.dropChance) return;
+    if (roll >= dropChanceAt(breakerHp)) return;
     const weapon = rollWeapon(which);
     const x = (gx + 0.5) * CELL;
     const y = (gy + 0.5) * CELL;
