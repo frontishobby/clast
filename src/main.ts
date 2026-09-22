@@ -6,7 +6,6 @@ import { Ai, type Difficulty } from './input/ai.ts';
 import { Keyboard } from './input/keyboard.ts';
 import { LocalInput } from './input/local.ts';
 import { randomCode, normalizeCode } from './net/code.ts';
-import { describeProbe, probeNetwork } from './net/ice.ts';
 import { findMatch, type Match } from './net/lobby.ts';
 import { GuestSession, HostSession } from './net/session.ts';
 import { BUTTON } from './input/gamepad.ts';
@@ -88,10 +87,6 @@ let lastScreenKind: string | null = null;
 let difficulty: Difficulty = 'normal';
 let matchAbort: AbortController | null = null;
 let showDebug = false;
-/** What this network looks like from outside, e.g. "ipv6 ok · ipv4 symmetric". */
-let netProbe: string | null = null;
-/** The path the current online match took, e.g. "p2p ipv6". */
-let netRoute: string | null = null;
 let fps = 60;
 
 function selectedId(): string | null {
@@ -211,13 +206,6 @@ async function startOnline(intent: Parameters<typeof findMatch>[0]): Promise<voi
   leaveGame();
   const abort = new AbortController();
   matchAbort = abort;
-  netRoute = null;
-
-  // Not needed to connect; it is there to tell why a connection never came.
-  void probeNetwork().then((probe) => {
-    netProbe = describeProbe(probe);
-    console.info(`[net] ${netProbe}`);
-  });
 
   const setStatus = (status: string) => {
     if (screen?.k === 'searching') screen = { k: 'searching', status };
@@ -231,11 +219,6 @@ async function startOnline(intent: Parameters<typeof findMatch>[0]): Promise<voi
       match.leave();
       return;
     }
-
-    void match.route().then((route) => {
-      netRoute = route;
-      if (route) console.info(`[net] connected ${route}`);
-    });
 
     // Both sides ran the same comparison on their peer ids, so exactly one of
     // them arrives here as host and there is nothing to negotiate.
@@ -583,7 +566,6 @@ function drawDebug(sim: Sim | null): void {
     sim
       ? `blocks ${sim.arena.count()}  drops ${sim.pickups.length}  shots ${sim.projectiles.length}  fx ${fx.count}`
       : 'no sim',
-    `net ${netProbe ?? '-'}  route ${netRoute ?? '-'}`,
   ];
   ctx.save();
   ctx.fillStyle = 'rgba(5,6,10,0.72)';
@@ -623,7 +605,7 @@ function render(_alpha: number, frameSeconds: number): void {
   vp.beginScreen();
   if (!screen && sim) drawMatchHud(sim);
   if (!screen && sim) drawSticks(vp, input.touch);
-  if (screen) drawMenu(vp, screen, selectedId(), time, netProbe);
+  if (screen) drawMenu(vp, screen, selectedId(), time);
   if (showDebug) drawDebug(sim);
   ctx.restore();
 }

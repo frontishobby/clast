@@ -32,8 +32,6 @@ export interface Hit {
   h: number;
 }
 
-const ONLINE_SCREENS = new Set<Screen['k']>(['searching', 'hosting', 'connecting', 'error']);
-
 const ITEM_W = 460;
 const ITEM_H = 62;
 const ITEM_GAP = 14;
@@ -182,8 +180,6 @@ export function drawMenu(
   screen: Screen,
   hovered: string | null,
   time: number,
-  /** A dim footer line on the online screens, for what the network looks like. */
-  note: string | null = null,
 ): void {
   const ctx = vp.ctx;
   const { logicalW, logicalH } = vp.layout;
@@ -221,15 +217,6 @@ export function drawMenu(
   }
   if (screen.k === 'joining') {
     drawCode(ctx, screen.typed, logicalW / 2, logicalH * 0.36, PALETTE.shard, true, time);
-  }
-  if (note && ONLINE_SCREENS.has(screen.k)) {
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.font = font(13);
-    ctx.fillStyle = PALETTE.dim;
-    ctx.globalAlpha = 0.7;
-    ctx.fillText(note, logicalW / 2, logicalH - 28);
-    ctx.restore();
   }
 
   // Buttons
