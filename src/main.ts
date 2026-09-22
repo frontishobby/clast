@@ -12,7 +12,7 @@ import { BUTTON } from './input/gamepad.ts';
 import { drawSticks } from './ui/controls.ts';
 import { drawMenu, hitboxes, itemsFor, typeCode, type Screen } from './ui/menu.ts';
 import { Fx } from './view/fx.ts';
-import { PALETTE, font, loadFonts } from './view/neon.ts';
+import { PALETTE, font, loadFonts, neonStroke, rectPath } from './view/neon.ts';
 import { drawWorld } from './view/renderer.ts';
 import { Viewport, WORLD_H, WORLD_W, type Seat } from './view/viewport.ts';
 
@@ -157,7 +157,34 @@ function leaveGame(): void {
   matchAbort = null;
 }
 
+/**
+ * A match owns one history entry, so the phone's back button or gesture
+ * leaves it -- touch has no Escape key. Leaving through the UI pops that
+ * entry again, so back from the menu still leaves the site as expected.
+ */
+function enterMatchHistory(): void {
+  if (history.state?.clast !== 'match') history.pushState({ clast: 'match' }, '');
+}
+
+/** Set while we pop our own entry, so that popstate is not taken as "back". */
+let poppingOwnEntry = false;
+
+function leaveMatchHistory(): void {
+  if (history.state?.clast !== 'match') return;
+  poppingOwnEntry = true;
+  history.back();
+}
+
+window.addEventListener('popstate', () => {
+  if (poppingOwnEntry) {
+    poppingOwnEntry = false;
+    return;
+  }
+  if (game.kind !== 'demo') toMenu({ k: 'title' });
+});
+
 function toMenu(next: Screen): void {
+  leaveMatchHistory();
   leaveGame();
   game = newDemo();
   screen = next;
@@ -170,6 +197,7 @@ function startSingle(): void {
   const seed = randomSeed();
   game = { kind: 'single', sim: new Sim(seed, layout), cpu: new Ai(1, difficulty, seed ^ 0xa1) };
   screen = null;
+  enterMatchHistory();
   vp.seat = 0;
   vp.resize();
 }
@@ -212,6 +240,7 @@ async function startOnline(intent: Parameters<typeof findMatch>[0]): Promise<voi
     }
     vp.seat = mySeat();
     vp.resize();
+    enterMatchHistory();
   } catch (err) {
     if (abort.signal.aborted) return;
     toMenu({ k: 'error', message: err instanceof Error ? err.message : 'could not connect' });
@@ -336,10 +365,7 @@ window.addEventListener('keydown', (e) => {
       break;
     case 'Enter':
       if (screen?.k === 'error') toMenu({ k: 'title' });
-      else if (!screen && currentSim()?.phase === 'over') {
-        if (game.kind === 'single') startSingle();
-        else if (game.kind !== 'demo') toMenu({ k: 'online' });
-      }
+      else if (!screen && currentSim()?.phase === 'over') finishMatch('again');
       break;
     case 'F3':
       showDebug = !showDebug;
@@ -373,10 +399,7 @@ function handleGamepadMenu(): void {
     toMenu({ k: 'title' });
     return;
   }
-  if (pad.pressed(BUTTON.confirm) && currentSim()?.phase === 'over') {
-    if (game.kind === 'single') startSingle();
-    else if (game.kind !== 'demo') toMenu({ k: 'online' });
-  }
+  if (pad.pressed(BUTTON.confirm) && currentSim()?.phase === 'over') finishMatch('again');
 }
 
 function update(dt: number): void {
@@ -385,6 +408,7 @@ function update(dt: number): void {
   handleGamepadMenu();
 
   const sim = currentSim();
+  overFor = sim?.phase === 'over' && !screen ? overFor + dt : 0;
 
   switch (game.kind) {
     case 'demo': {
@@ -421,6 +445,55 @@ function update(dt: number): void {
   keys.endFrame();
 }
 
+// --- end of match -------------------------------------------------------------
+
+interface OverButton {
+  id: 'again' | 'menu';
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Seconds since the result appeared, so a swing in the last instant is not a tap. */
+let overFor = 0;
+const OVER_TAP_DELAY = 0.6;
+
+function overButtons(): OverButton[] {
+  const { logicalW, logicalH } = vp.layout;
+  const w = 200;
+  const h = 58;
+  const gap = 20;
+  const y = logicalH / 2 + 96;
+  const labels: [OverButton['id'], string][] =
+    game.kind === 'single' ? [['again', 'AGAIN'], ['menu', 'MENU']] : [['menu', 'MENU']];
+  const total = labels.length * w + (labels.length - 1) * gap;
+  return labels.map(([id, label], i) => ({
+    id,
+    label,
+    x: logicalW / 2 - total / 2 + i * (w + gap),
+    y,
+    w,
+    h,
+  }));
+}
+
+function finishMatch(choice: OverButton['id']): void {
+  if (choice === 'again' && game.kind === 'single') startSingle();
+  else if (game.kind === 'single') toMenu({ k: 'title' });
+  else if (game.kind !== 'demo') toMenu({ k: 'online' });
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (screen || currentSim()?.phase !== 'over' || overFor < OVER_TAP_DELAY) return;
+  const p = vp.screenFromClient(e.clientX, e.clientY);
+  const hit = overButtons().find(
+    (b) => p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h,
+  );
+  if (hit) finishMatch(hit.id);
+});
+
 function drawMatchHud(sim: Sim): void {
   const ctx = vp.ctx;
   const { logicalW, logicalH } = vp.layout;
@@ -452,14 +525,35 @@ function drawMatchHud(sim: Sim): void {
       logicalW / 2,
       logicalH / 2 - 44,
     );
-    ctx.font = font(16);
-    ctx.fillStyle = PALETTE.dim;
-    ctx.fillText(
-      game.kind === 'single' ? 'enter to play again  ·  esc for the menu' : 'esc for the menu',
-      logicalW / 2,
-      logicalH / 2 + 26,
-    );
+    // Keys are only worth mentioning to someone who has them.
+    if (!input.touch.engaged) {
+      ctx.font = font(16);
+      ctx.fillStyle = PALETTE.dim;
+      ctx.fillText(
+        game.kind === 'single' ? 'enter to play again  ·  esc for the menu' : 'esc for the menu',
+        logicalW / 2,
+        logicalH / 2 + 26,
+      );
+    }
     ctx.restore();
+
+    const ready = overFor >= OVER_TAP_DELAY;
+    for (const b of overButtons()) {
+      const color = b.id === 'again' ? PALETTE.seat0 : PALETTE.dim;
+      ctx.save();
+      ctx.fillStyle = 'rgba(5,6,10,0.85)';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.restore();
+      neonStroke(ctx, rectPath(b.x, b.y, b.w, b.h), color, 1.8, ready ? 0.9 : 0.3);
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = font(22, 700);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = ready ? 1 : 0.4;
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 1);
+      ctx.restore();
+    }
   }
 }
 
