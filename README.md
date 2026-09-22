@@ -76,13 +76,18 @@ every window size; anything outside the 16:9 or 9:16 frame is a black bar.
 
 ## Mobile
 
-Touch devices are pinned to portrait, so the controls always sit where thumbs
-are. The left half is a floating stick — wherever your thumb lands becomes the
+Hold the phone either way: upright gets the portrait view, sideways the
+landscape one, and it switches the moment you turn it. The left half is a floating stick — wherever your thumb lands becomes the
 centre, so you never have to look down to find it. The right half is one big
 attack button: you swing toward wherever you last walked, so only one thumb
 ever has to steer.
 
 <img src="docs/media/touch.png" alt="Touch controls" width="320">
+
+It is also a PWA: *Add to Home Screen* installs it full screen with no browser
+chrome, and a small service worker keeps it playable offline against the CPU.
+The page is fetched network-first so a deploy shows up on the next launch;
+the hashed assets are cache-first.
 
 ## Multiplayer
 

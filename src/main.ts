@@ -9,7 +9,7 @@ import { randomCode, normalizeCode } from './net/code.ts';
 import { findMatch, type Match } from './net/lobby.ts';
 import { GuestSession, HostSession } from './net/session.ts';
 import { BUTTON } from './input/gamepad.ts';
-import { drawSticks, drawRotateHint } from './ui/controls.ts';
+import { drawSticks } from './ui/controls.ts';
 import { drawMenu, hitboxes, itemsFor, typeCode, type Screen } from './ui/menu.ts';
 import { Fx } from './view/fx.ts';
 import { PALETTE } from './view/neon.ts';
@@ -20,18 +20,21 @@ const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const vp = new Viewport(canvas);
 
 /**
- * Touch devices play in portrait, always.
+ * Orientation simply follows the window, phones included.
  *
- * The per-seat view rotation already makes orientation a purely local choice,
- * so pinning phones to one of them costs nothing and means the on-screen
- * sticks always sit where thumbs are. A sideways phone gets a hint rather
- * than a sliver of playfield.
+ * The per-seat view rotation already makes it a purely local choice: a
+ * sideways phone gets the landscape view and an upright one the portrait
+ * view, and the touch controls split the screen into halves either way.
  */
-const isTouchDevice =
-  typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-if (isTouchDevice) vp.orientationOverride = 'portrait';
 
-const heldSideways = () => isTouchDevice && window.innerWidth > window.innerHeight;
+// Installable and playable offline. Dev builds skip it so a cached bundle
+// never hides the change you just made.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
 const keys = new Keyboard();
 const input = new LocalInput(vp, keys, canvas);
 const fx = new Fx();
@@ -485,7 +488,6 @@ function render(_alpha: number, frameSeconds: number): void {
   if (!screen && sim) drawSticks(vp, input.touch);
   if (screen) drawMenu(vp, screen, selectedId(), time);
   if (showDebug) drawDebug(sim);
-  if (heldSideways()) drawRotateHint(vp, time);
   ctx.restore();
 }
 
