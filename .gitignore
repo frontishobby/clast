@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.vercel/
+.DS_Store
+*.log
+.playwright-mcp/
+
+# Working screenshots from development sessions, not project assets.
+docs/shots/
