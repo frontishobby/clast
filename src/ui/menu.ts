@@ -1,5 +1,5 @@
 import { CODE_LENGTH, isCodeChar, normalizeCode } from '../net/code.ts';
-import { PALETTE, circlePath, neonStroke, polyPath, rectPath } from '../view/neon.ts';
+import { PALETTE, circlePath, font, neonStroke, polyPath, rectPath } from '../view/neon.ts';
 import type { Viewport } from '../view/viewport.ts';
 
 /**
@@ -164,7 +164,7 @@ function drawCode(
     );
     if (c) {
       ctx.save();
-      ctx.font = '700 44px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.font = font(44, 700);
       ctx.fillStyle = filledColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -194,10 +194,10 @@ export function drawMenu(
   ctx.save();
   ctx.textAlign = 'center';
   const headY = logicalH * (screen.k === 'title' ? 0.24 : 0.2);
-  ctx.font = `700 ${screen.k === 'title' ? 72 : 44}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  ctx.font = font(screen.k === 'title' ? 72 : 44, 700);
   ctx.fillStyle = PALETTE.text;
   ctx.fillText(heading, logicalW / 2, headY);
-  ctx.font = '16px ui-monospace, SFMono-Regular, Menlo, monospace';
+  ctx.font = font(16);
   ctx.fillStyle = PALETTE.dim;
   ctx.fillText(sub, logicalW / 2, headY + 34);
   ctx.restore();
@@ -209,7 +209,7 @@ export function drawMenu(
     drawCode(ctx, screen.code, logicalW / 2, logicalH * 0.36, PALETTE.pickup, false, time);
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = '15px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = font(15);
     ctx.fillStyle = PALETTE.dim;
     ctx.fillText('share this code', logicalW / 2, logicalH * 0.36 + 100);
     ctx.restore();
@@ -234,12 +234,12 @@ export function drawMenu(
 
     ctx.save();
     ctx.textBaseline = 'middle';
-    ctx.font = '700 22px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = font(22, 700);
     ctx.fillStyle = accent;
     ctx.textAlign = 'left';
     ctx.fillText(item.label, b.x + 26, b.y + b.h / 2);
     if (item.hint) {
-      ctx.font = '14px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.font = font(14);
       ctx.fillStyle = PALETTE.dim;
       ctx.textAlign = 'right';
       ctx.fillText(item.hint, b.x + b.w - 26, b.y + b.h / 2);

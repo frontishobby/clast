@@ -12,7 +12,14 @@
  */
 
 const CACHE = 'clast-v1';
-const SHELL = ['./', './manifest.webmanifest', './favicon.svg', './icons/icon-192.png'];
+const SHELL = [
+  './',
+  './manifest.webmanifest',
+  './favicon.svg',
+  './icons/icon-192.png',
+  './fonts/jetbrains-mono-latin-400-normal.woff2',
+  './fonts/jetbrains-mono-latin-700-normal.woff2',
+];
 
 /** Asset URLs a page references, so they can be cached before first use. */
 function assetsIn(html) {

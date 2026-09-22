@@ -6,6 +6,32 @@
  * blending: a wide dim halo, a mid bloom, and a tight bright core.
  */
 
+/**
+ * The one typeface, bundled rather than left to the OS: `ui-monospace` is SF
+ * Mono on Apple, Consolas-ish on Windows and something else again on Android,
+ * which changes widths enough to crowd the menus. The system stack stays as a
+ * fallback for the first frames before the file arrives.
+ */
+export const FONT_FAMILY = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+
+export function font(px: number, weight: 400 | 700 = 400): string {
+  return `${weight} ${px}px ${FONT_FAMILY}`;
+}
+
+/** Registers the bundled faces. Canvas text will not trigger the load itself. */
+export function loadFonts(): void {
+  if (typeof FontFace !== 'function') return;
+  for (const weight of [400, 700]) {
+    const face = new FontFace(
+      'JetBrains Mono',
+      `url(./fonts/jetbrains-mono-latin-${weight}-normal.woff2) format('woff2')`,
+      { weight: String(weight) },
+    );
+    document.fonts.add(face);
+    face.load().catch(() => {});
+  }
+}
+
 export type PathFn = (ctx: CanvasRenderingContext2D) => void;
 
 export const PALETTE = {

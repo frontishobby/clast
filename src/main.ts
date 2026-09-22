@@ -12,7 +12,7 @@ import { BUTTON } from './input/gamepad.ts';
 import { drawSticks } from './ui/controls.ts';
 import { drawMenu, hitboxes, itemsFor, typeCode, type Screen } from './ui/menu.ts';
 import { Fx } from './view/fx.ts';
-import { PALETTE } from './view/neon.ts';
+import { PALETTE, font, loadFonts } from './view/neon.ts';
 import { drawWorld } from './view/renderer.ts';
 import { Viewport, type Seat } from './view/viewport.ts';
 
@@ -26,6 +26,8 @@ const vp = new Viewport(canvas);
  * sideways phone gets the landscape view and an upright one the portrait
  * view, and the touch controls split the screen into halves either way.
  */
+
+loadFonts();
 
 // Installable and playable offline. Dev builds skip it so a cached bundle
 // never hides the change you just made.
@@ -404,11 +406,11 @@ function drawMatchHud(sim: Sim): void {
 
   ctx.save();
   ctx.textAlign = 'center';
-  ctx.font = '700 22px ui-monospace, SFMono-Regular, Menlo, monospace';
+  ctx.font = font(22, 700);
   ctx.fillStyle = held.color;
   ctx.fillText(held.name, logicalW / 2, logicalH - 108);
   if (me.uses >= 0) {
-    ctx.font = '14px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = font(14);
     ctx.fillStyle = PALETTE.dim;
     ctx.fillText(`${me.uses} left`, logicalW / 2, logicalH - 84);
   }
@@ -420,14 +422,14 @@ function drawMatchHud(sim: Sim): void {
     ctx.fillStyle = 'rgba(5,6,10,0.7)';
     ctx.fillRect(0, logicalH / 2 - 76, logicalW, 152);
     ctx.textAlign = 'center';
-    ctx.font = '700 58px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = font(58, 700);
     ctx.fillStyle = sim.winner === null ? PALETTE.text : won ? PALETTE.pickup : PALETTE.zone;
     ctx.fillText(
       sim.winner === null ? 'DRAW' : won ? 'VICTORY' : 'DEFEAT',
       logicalW / 2,
       logicalH / 2 - 44,
     );
-    ctx.font = '16px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = font(16);
     ctx.fillStyle = PALETTE.dim;
     ctx.fillText(
       game.kind === 'single' ? 'enter to play again  ·  esc for the menu' : 'esc for the menu',
@@ -453,7 +455,7 @@ function drawDebug(sim: Sim | null): void {
   ctx.fillRect(12, 12, 430, lines.length * 19 + 14);
   lines.forEach((s, i) => {
     ctx.fillStyle = PALETTE.dim;
-    ctx.font = '13px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = font(13);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(s, 22, 20 + i * 19);

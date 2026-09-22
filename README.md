@@ -10,7 +10,7 @@ playable area zooms in on the centre until there is nowhere left to hide.
 A match takes about twenty seconds.
 
 No install, no account, no game server. Multiplayer is peer to peer, and the
-whole thing is 42 KB gzipped.
+whole thing is 42 KB gzipped, plus 43 KB for its font.
 
 ![Title screen](docs/media/title.png)
 
@@ -185,4 +185,6 @@ for one player:
 ## Built with
 
 Vanilla TypeScript and Canvas 2D. No game engine, no framework, no renderer
-library. Vite for the build, Trystero for peer discovery.
+library. Vite for the build, Trystero for peer discovery, and
+[JetBrains Mono](https://www.jetbrains.com/lp/mono/) (OFL) as the one typeface,
+bundled so every OS draws the same text.
