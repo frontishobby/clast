@@ -7,7 +7,7 @@ import type { Link, NetMessage } from './protocol.ts';
  * through public relays and then talk directly over WebRTC.
  */
 
-const APP_ID = 'shard-arena-v1';
+const APP_ID = 'clast-arena-v1';
 const LOBBY_ROOM = 'lobby-v1';
 
 /**

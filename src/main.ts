@@ -494,7 +494,7 @@ startLoop({ stepMs: 1000 / 60, update, render });
 
 if (import.meta.env.DEV) {
   Object.assign(window as unknown as Record<string, unknown>, {
-    shard: {
+    clast: {
       get game() {
         return game;
       },

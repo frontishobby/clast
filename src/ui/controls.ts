@@ -70,6 +70,6 @@ export function drawRotateHint(vp: Viewport, time: number): void {
   ctx.fillText('HOLD IT UPRIGHT', cx, cy + 160);
   ctx.font = '15px ui-monospace, SFMono-Regular, Menlo, monospace';
   ctx.fillStyle = PALETTE.dim;
-  ctx.fillText('shard is played in portrait', cx, cy + 190);
+  ctx.fillText('clast is played in portrait', cx, cy + 190);
   ctx.restore();
 }

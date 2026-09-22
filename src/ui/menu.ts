@@ -74,7 +74,7 @@ export function itemsFor(screen: Screen): MenuItem[] {
 function title(screen: Screen): { heading: string; sub: string } {
   switch (screen.k) {
     case 'title':
-      return { heading: 'SHARD', sub: 'break the field. last one standing.' };
+      return { heading: 'CLAST', sub: 'break the field. last one standing.' };
     case 'difficulty':
       return { heading: 'CPU', sub: 'pick your opponent' };
     case 'online':
