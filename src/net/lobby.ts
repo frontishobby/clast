@@ -13,23 +13,27 @@ const LOBBY_ROOM = 'lobby-v1';
 /**
  * Signalling relays, pinned rather than left to trystero's defaults.
  *
- * The default list includes relays that come and go; one of them was returning
- * 502 during testing, which costs a failed WebSocket handshake on every single
- * connection attempt. These are the long-lived public nostr relays, and the
- * redundancy means a couple of them can be down without anyone noticing.
+ * Every one of these was checked by matching two browsers through it alone.
+ * Plenty of relays accept a socket and then refuse trystero's traffic:
+ * relay.damus.io rate-limits and then bans its frequent announces, and
+ * web-of-trust relays such as offchain.pub and nostr.bitcoiner.social reject unknown keys outright.
+ * Most of trystero's own default list is simply offline.
  *
  * Relays only carry the WebRTC offer/answer handshake. Once two peers are
  * connected, every byte of the match goes directly between them.
+ *
+ * Trystero connects to every url listed here (redundancy only trims its own
+ * defaults), and two players only meet if they share at least one relay, so
+ * a longer list costs a few sockets and buys a lot of margin.
  */
 const RELAY_URLS = [
-  'wss://relay.damus.io',
   'wss://nos.lol',
   'wss://relay.primal.net',
-  'wss://relay.nostr.band',
   'wss://nostr.mom',
   'wss://relay.snort.social',
+  'wss://relay.nostr.net',
+  'wss://nostr.oxtr.dev',
 ];
-const RELAY_REDUNDANCY = 4;
 
 export type MatchIntent =
   | { kind: 'random' }
@@ -111,7 +115,10 @@ export function findMatch(intent: MatchIntent, opts: MatchOptions = {}): Promise
   return new Promise<Match>((resolve, reject) => {
     const { onStatus, signal } = opts;
     const room: Room = joinRoom(
-      { appId: APP_ID, relayUrls: RELAY_URLS, relayRedundancy: RELAY_REDUNDANCY },
+      // Since 0.25 this lives under relayConfig. The old top-level relayUrls
+      // is silently ignored, which quietly put everyone on a handful of
+      // random default relays, most of them dead.
+      { appId: APP_ID, relayConfig: { urls: RELAY_URLS } },
       roomIdFor(intent),
     );
 

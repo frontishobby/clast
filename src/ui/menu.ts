@@ -78,7 +78,7 @@ function title(screen: Screen): { heading: string; sub: string } {
     case 'difficulty':
       return { heading: 'CPU', sub: 'pick your opponent' };
     case 'online':
-      return { heading: 'ONLINE', sub: 'peer to peer, no server' };
+      return { heading: 'ONLINE', sub: 'play someone, or bring a friend' };
     case 'searching':
       return { heading: 'SEARCHING', sub: screen.status };
     case 'hosting':

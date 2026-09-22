@@ -34,11 +34,19 @@ declare module 'trystero/nostr' {
     onPeerLeave: ((peerId: string) => void) | null;
   }
 
+  export interface RelayConfig {
+    /** Connect to exactly these. When set, redundancy is not applied. */
+    urls?: string[];
+    /** How many of the built-in defaults to use when urls is not set. */
+    redundancy?: number;
+    manualReconnection?: boolean;
+    warnOnRelayFailure?: boolean;
+  }
+
   export interface RoomConfig {
     appId: string;
     password?: string;
-    relayUrls?: string[];
-    relayRedundancy?: number;
+    relayConfig?: RelayConfig;
     rtcConfig?: RTCConfiguration;
   }
 
